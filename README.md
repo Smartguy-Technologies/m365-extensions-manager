@@ -54,8 +54,8 @@ Instead of entering IDs in the Settings tab, you can provide defaults through Vi
 environment variables — copy `.env.example` to `.env.local` and fill in:
 
 ```bash
-VITE_TENANT_ID=<your tenant id>
-VITE_CLIENT_ID=<your app registration client id>
+M365_TENANT_ID=<your tenant id>
+EAM_APP_CLIENT_ID=<your app registration client id>
 # optional, defaults to ;
 VITE_DELIMITER=;
 ```

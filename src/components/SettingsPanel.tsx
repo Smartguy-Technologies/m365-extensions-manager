@@ -20,7 +20,7 @@ export default function SettingsPanel({ settings, onSave }: Props) {
         <code>{window.location.origin}</code>) with delegated permission{" "}
         <code>User.ReadWrite.All</code> (admin consent required), then paste its IDs here.
         Settings are stored only in this browser. Defaults can also be supplied via a{" "}
-        <code>.env.local</code> file (<code>VITE_TENANT_ID</code>, <code>VITE_CLIENT_ID</code>,{" "}
+        <code>.env.local</code> file (<code>M365_TENANT_ID</code>, <code>EAM_APP_CLIENT_ID</code>,{" "}
         <code>VITE_DELIMITER</code>) — values saved here override them.
       </p>
       <label>
@@ -32,7 +32,7 @@ export default function SettingsPanel({ settings, onSave }: Props) {
           spellCheck={false}
         />
         {ENV_DEFAULTS.tenantId && tenantId === ENV_DEFAULTS.tenantId && (
-          <span className="hint">Using default from VITE_TENANT_ID</span>
+          <span className="hint">Using default from M365_TENANT_ID</span>
         )}
       </label>
       <label>
@@ -44,7 +44,7 @@ export default function SettingsPanel({ settings, onSave }: Props) {
           spellCheck={false}
         />
         {ENV_DEFAULTS.clientId && clientId === ENV_DEFAULTS.clientId && (
-          <span className="hint">Using default from VITE_CLIENT_ID</span>
+          <span className="hint">Using default from EAM_APP_CLIENT_ID</span>
         )}
       </label>
       <label>

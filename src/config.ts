@@ -9,12 +9,12 @@ const STORAGE_KEY = "eam.settings";
 
 /**
  * Defaults can be provided at build/dev time via environment variables
- * (e.g. in a .env.local file): VITE_TENANT_ID, VITE_CLIENT_ID, VITE_DELIMITER.
+ * (e.g. in a .env.local file): M365_TENANT_ID, EAM_APP_CLIENT_ID, VITE_DELIMITER.
  * Values saved in the Settings tab override them.
  */
 export const ENV_DEFAULTS = {
-  tenantId: (import.meta.env.VITE_TENANT_ID ?? "").trim(),
-  clientId: (import.meta.env.VITE_CLIENT_ID ?? "").trim(),
+  tenantId: (import.meta.env.M365_TENANT_ID ?? "").trim(),
+  clientId: (import.meta.env.EAM_APP_CLIENT_ID ?? "").trim(),
   delimiter: import.meta.env.VITE_DELIMITER || ";",
 };
 
