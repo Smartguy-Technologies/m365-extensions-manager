@@ -21,7 +21,8 @@ there is no backend and nothing leaves your machine except calls to Microsoft Gr
 - **All users report**: page through every user in the tenant, filter the results,
   review all extension attributes, and **export to CSV**
 - **Bulk operations** with preview-before-apply:
-  - Bulk add items (duplicates skipped per user)
+  - Bulk add items (duplicates skipped per user); the target attribute is optional —
+    "Auto" writes to each user's next empty attribute, deduping across all 15
   - Bulk remove items
   - Overwrite or clear an attribute
   - Paste a list of UPNs/object IDs (e.g. a CSV column); updates are sent via Graph `$batch`

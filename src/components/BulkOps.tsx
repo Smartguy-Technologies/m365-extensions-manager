@@ -23,8 +23,13 @@ interface Props {
 
 type Operation = "add" | "remove" | "overwrite" | "clear";
 
+/** Sentinel for "write to the user's next empty attribute" (Add only). */
+const AUTO = "auto";
+
 interface PlannedChange {
   user: GraphUser;
+  /** Attribute this change targets (resolved per user in Auto mode). */
+  attribute: string;
   before: string | null;
   after: string | null;
   note: string;
@@ -33,7 +38,7 @@ interface PlannedChange {
 
 export default function BulkOps({ msal, settings }: Props) {
   const [upnText, setUpnText] = useState("");
-  const [attribute, setAttribute] = useState(ATTRIBUTE_NAMES[0]);
+  const [attribute, setAttribute] = useState<string>(AUTO);
   const [operation, setOperation] = useState<Operation>("add");
   const [valuesText, setValuesText] = useState("");
   const [plan, setPlan] = useState<PlannedChange[] | null>(null);
@@ -45,14 +50,66 @@ export default function BulkOps({ msal, settings }: Props) {
 
   const { delimiter } = settings;
 
+  /** Add into the user's first empty attribute, deduping against ALL 15 attributes. */
+  function planAutoAdd(user: GraphUser, values: string[]): PlannedChange {
+    const everywhere = ATTRIBUTE_NAMES.flatMap((n) =>
+      parseItems(user.onPremisesExtensionAttributes[n], delimiter),
+    );
+    const { items: merged, skipped } = addItems(everywhere, values);
+    const newOnes = merged.slice(everywhere.length);
+    if (newOnes.length === 0) {
+      return {
+        user,
+        attribute: "—",
+        before: null,
+        after: null,
+        note: "nothing to add (already present in some attribute)",
+        skip: true,
+      };
+    }
+    const target = ATTRIBUTE_NAMES.find((n) => !user.onPremisesExtensionAttributes[n]);
+    if (!target) {
+      return {
+        user,
+        attribute: "—",
+        before: null,
+        after: null,
+        note: "no empty attribute available (all 15 in use)",
+        skip: true,
+      };
+    }
+    return {
+      user,
+      attribute: target,
+      before: null,
+      after: serializeItems(newOnes, delimiter),
+      note: `+${newOnes.length} item(s)${
+        skipped.length ? `, ${skipped.length} duplicate(s) skipped` : ""
+      }`,
+      skip: false,
+    };
+  }
+
   function planFor(user: GraphUser): PlannedChange {
-    const before = user.onPremisesExtensionAttributes[attribute] ?? null;
-    const existing = parseItems(before, delimiter);
     const values = parseInputValues(valuesText, delimiter);
 
     if (user.onPremisesSyncEnabled) {
-      return { user, before, after: before, note: "AD-synced user — read-only, skipped", skip: true };
+      return {
+        user,
+        attribute: attribute === AUTO ? "—" : attribute,
+        before: null,
+        after: null,
+        note: "AD-synced user — read-only, skipped",
+        skip: true,
+      };
     }
+
+    if (operation === "add" && attribute === AUTO) {
+      return planAutoAdd(user, values);
+    }
+
+    const before = user.onPremisesExtensionAttributes[attribute] ?? null;
+    const existing = parseItems(before, delimiter);
 
     switch (operation) {
       case "add": {
@@ -60,6 +117,7 @@ export default function BulkOps({ msal, settings }: Props) {
         const added = values.length - skipped.length;
         return {
           user,
+          attribute,
           before,
           after: serializeItems(items, delimiter),
           note:
@@ -73,6 +131,7 @@ export default function BulkOps({ msal, settings }: Props) {
         const { items, removed } = removeItems(existing, values);
         return {
           user,
+          attribute,
           before,
           after: serializeItems(items, delimiter),
           note: removed.length === 0 ? "no matching items" : `-${removed.length} item(s)`,
@@ -81,10 +140,10 @@ export default function BulkOps({ msal, settings }: Props) {
       }
       case "overwrite": {
         const after = serializeItems(values, delimiter);
-        return { user, before, after, note: "value replaced", skip: after === before };
+        return { user, attribute, before, after, note: "value replaced", skip: after === before };
       }
       case "clear":
-        return { user, before, after: null, note: "cleared", skip: before === null };
+        return { user, attribute, before, after: null, note: "cleared", skip: before === null };
     }
   }
 
@@ -143,7 +202,7 @@ export default function BulkOps({ msal, settings }: Props) {
     try {
       const res = await batchUpdateExtensionAttributes(
         msal,
-        changes.map((c) => ({ userId: c.user.id, attrs: { [attribute]: c.after } })),
+        changes.map((c) => ({ userId: c.user.id, attrs: { [c.attribute]: c.after } })),
         (done, total) => setProgress(`Applying… ${done}/${total}`),
       );
       setResults(res);
@@ -177,7 +236,12 @@ export default function BulkOps({ msal, settings }: Props) {
             Operation
             <select
               value={operation}
-              onChange={(e) => setOperation(e.target.value as Operation)}
+              onChange={(e) => {
+                const op = e.target.value as Operation;
+                setOperation(op);
+                // Auto-targeting only makes sense for Add.
+                if (op !== "add" && attribute === AUTO) setAttribute(ATTRIBUTE_NAMES[0]);
+              }}
             >
               <option value="add">Add items (skips duplicates)</option>
               <option value="remove">Remove items</option>
@@ -186,14 +250,23 @@ export default function BulkOps({ msal, settings }: Props) {
             </select>
           </label>
           <label>
-            Attribute
+            Attribute{operation === "add" ? " (optional)" : ""}
             <select value={attribute} onChange={(e) => setAttribute(e.target.value)}>
+              {operation === "add" && (
+                <option value={AUTO}>Auto — next available attribute</option>
+              )}
               {ATTRIBUTE_NAMES.map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
               ))}
             </select>
+            {operation === "add" && attribute === AUTO && (
+              <span className="hint">
+                Writes to each user's first empty attribute (1→15); duplicates are checked
+                across all 15 attributes.
+              </span>
+            )}
           </label>
           {operation !== "clear" && (
             <label>
@@ -238,6 +311,7 @@ export default function BulkOps({ msal, settings }: Props) {
             <thead>
               <tr>
                 <th>User</th>
+                <th>Attribute</th>
                 <th>Before</th>
                 <th>After</th>
                 <th>Note</th>
@@ -247,6 +321,7 @@ export default function BulkOps({ msal, settings }: Props) {
               {plan.map((p) => (
                 <tr key={p.user.id} className={p.skip ? "skipped" : ""}>
                   <td className="mono">{p.user.userPrincipalName}</td>
+                  <td className="mono">{p.attribute}</td>
                   <td className="mono">{p.before ?? <em>empty</em>}</td>
                   <td className="mono">{p.skip ? "—" : p.after ?? <em>empty</em>}</td>
                   <td>{p.note}</td>
