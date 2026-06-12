@@ -458,6 +458,35 @@ textarea {
   padding: 0.25rem 0.5rem;
 }
 
+.attr-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.attr-label {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 400;
+  font-size: 0.82rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.inline-check input {
+  width: auto;
+  margin: 0;
+}
+
 .query-form {
   display: flex;
   gap: 0.5rem;

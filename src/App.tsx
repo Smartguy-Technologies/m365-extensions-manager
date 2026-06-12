@@ -10,9 +10,10 @@ import { getMsal, getActiveAccount, resetMsal, signIn, signOut } from "./auth";
 import SettingsPanel from "./components/SettingsPanel";
 import UsersTab from "./components/UsersTab";
 import AttributeQuery from "./components/AttributeQuery";
+import AllUsersTab from "./components/AllUsersTab";
 import BulkOps from "./components/BulkOps";
 
-type Tab = "users" | "query" | "bulk" | "settings";
+type Tab = "users" | "query" | "all" | "bulk" | "settings";
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -110,6 +111,9 @@ export default function App() {
         <button className={tab === "query" ? "active" : ""} onClick={() => setTab("query")}>
           Query by attribute
         </button>
+        <button className={tab === "all" ? "active" : ""} onClick={() => setTab("all")}>
+          All users
+        </button>
         <button className={tab === "bulk" ? "active" : ""} onClick={() => setTab("bulk")}>
           Bulk operations
         </button>
@@ -142,6 +146,7 @@ export default function App() {
         )}
         {signedIn && tab === "users" && <UsersTab msal={msal} settings={settings} />}
         {signedIn && tab === "query" && <AttributeQuery msal={msal} settings={settings} />}
+        {signedIn && tab === "all" && <AllUsersTab msal={msal} settings={settings} />}
         {signedIn && tab === "bulk" && <BulkOps msal={msal} settings={settings} />}
       </main>
     </div>

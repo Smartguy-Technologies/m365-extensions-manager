@@ -16,7 +16,10 @@ there is no backend and nothing leaves your machine except calls to Microsoft Gr
   - Move all items from one attribute to another
   - De-dupe button for existing values
 - **Query by user**: search by name, UPN, or email
-- **Query by attribute**: exact value match, item membership (contains), or "has any value"
+- **Query by attribute**: exact value match, item membership (contains), or "has any value" —
+  against a single attribute or **all 15 attributes at once**
+- **All users report**: page through every user in the tenant, filter the results,
+  review all extension attributes, and **export to CSV**
 - **Bulk operations** with preview-before-apply:
   - Bulk add items (duplicates skipped per user)
   - Bulk remove items

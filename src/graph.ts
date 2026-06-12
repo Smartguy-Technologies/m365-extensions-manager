@@ -129,6 +129,26 @@ export async function listUsersWithAttribute(
 }
 
 /**
+ * Page through every user in the tenant, following @odata.nextLink.
+ * Reports progress as pages arrive so the UI can show a running count.
+ */
+export async function listAllUsers(
+  app: PublicClientApplication,
+  onProgress?: (count: number) => void,
+): Promise<GraphUser[]> {
+  let url: string | null = `/users?$select=${USER_SELECT}&$top=999&$count=true`;
+  const all: GraphUser[] = [];
+  while (url) {
+    const res = await graphFetch(app, url, {}, { ConsistencyLevel: "eventual" });
+    const body: { value: GraphUser[]; "@odata.nextLink"?: string } = await res.json();
+    all.push(...body.value.map(normalizeUser));
+    onProgress?.(all.length);
+    url = body["@odata.nextLink"] ?? null;
+  }
+  return all;
+}
+
+/**
  * Patch one or more extension attributes on a user.
  * Pass null as a value to clear that attribute.
  * NOTE: for users synced from on-premises AD this property is read-only in
