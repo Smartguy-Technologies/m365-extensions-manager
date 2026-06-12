@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AppSettings } from "../config";
+import { ENV_DEFAULTS, type AppSettings } from "../config";
 
 interface Props {
   settings: AppSettings;
@@ -19,7 +19,9 @@ export default function SettingsPanel({ settings, onSave }: Props) {
         Create an app registration in Entra (single-page application, redirect URI{" "}
         <code>{window.location.origin}</code>) with delegated permission{" "}
         <code>User.ReadWrite.All</code> (admin consent required), then paste its IDs here.
-        Settings are stored only in this browser.
+        Settings are stored only in this browser. Defaults can also be supplied via a{" "}
+        <code>.env.local</code> file (<code>VITE_TENANT_ID</code>, <code>VITE_CLIENT_ID</code>,{" "}
+        <code>VITE_DELIMITER</code>) — values saved here override them.
       </p>
       <label>
         Tenant ID
@@ -29,6 +31,9 @@ export default function SettingsPanel({ settings, onSave }: Props) {
           placeholder="00000000-0000-0000-0000-000000000000"
           spellCheck={false}
         />
+        {ENV_DEFAULTS.tenantId && tenantId === ENV_DEFAULTS.tenantId && (
+          <span className="hint">Using default from VITE_TENANT_ID</span>
+        )}
       </label>
       <label>
         Application (client) ID
@@ -38,6 +43,9 @@ export default function SettingsPanel({ settings, onSave }: Props) {
           placeholder="00000000-0000-0000-0000-000000000000"
           spellCheck={false}
         />
+        {ENV_DEFAULTS.clientId && clientId === ENV_DEFAULTS.clientId && (
+          <span className="hint">Using default from VITE_CLIENT_ID</span>
+        )}
       </label>
       <label>
         Item delimiter

@@ -7,21 +7,33 @@ export interface AppSettings {
 
 const STORAGE_KEY = "eam.settings";
 
-export const DEFAULT_SETTINGS: AppSettings = {
-  tenantId: "",
-  clientId: "",
-  delimiter: ";",
+/**
+ * Defaults can be provided at build/dev time via environment variables
+ * (e.g. in a .env.local file): VITE_TENANT_ID, VITE_CLIENT_ID, VITE_DELIMITER.
+ * Values saved in the Settings tab override them.
+ */
+export const ENV_DEFAULTS = {
+  tenantId: (import.meta.env.VITE_TENANT_ID ?? "").trim(),
+  clientId: (import.meta.env.VITE_CLIENT_ID ?? "").trim(),
+  delimiter: import.meta.env.VITE_DELIMITER || ";",
 };
 
+export const DEFAULT_SETTINGS: AppSettings = { ...ENV_DEFAULTS };
+
 export function loadSettings(): AppSettings {
+  let stored: Partial<AppSettings> = {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = JSON.parse(raw) as Partial<AppSettings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    if (raw) stored = JSON.parse(raw) as Partial<AppSettings>;
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    /* fall through to defaults */
   }
+  // Saved values win, but empty/missing fields fall back to env defaults.
+  return {
+    tenantId: stored.tenantId?.trim() || ENV_DEFAULTS.tenantId,
+    clientId: stored.clientId?.trim() || ENV_DEFAULTS.clientId,
+    delimiter: stored.delimiter || ENV_DEFAULTS.delimiter,
+  };
 }
 
 export function saveSettings(settings: AppSettings): void {

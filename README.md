@@ -48,6 +48,21 @@ npm run dev
 Open <http://localhost:5173>, go to **Settings**, paste your tenant ID and client ID,
 save, then click **Sign in to Entra**.
 
+### Pre-configuring via environment variables
+
+Instead of entering IDs in the Settings tab, you can provide defaults through Vite
+environment variables — copy `.env.example` to `.env.local` and fill in:
+
+```bash
+VITE_TENANT_ID=<your tenant id>
+VITE_CLIENT_ID=<your app registration client id>
+# optional, defaults to ;
+VITE_DELIMITER=;
+```
+
+These are read at dev-server start (or build time). Values saved in the Settings tab
+take precedence over the environment defaults; empty saved fields fall back to them.
+
 ## Notes & limitations
 
 - Each extension attribute stores a single string (max 1024 characters). This app packs
