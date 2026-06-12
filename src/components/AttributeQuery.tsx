@@ -15,13 +15,13 @@ interface Props {
   settings: AppSettings;
 }
 
-type Mode = "equals" | "containsItem" | "hasAnyValue";
+type Mode = "equals" | "containsItem" | "containsText" | "hasAnyValue";
 
 const ALL = "all";
 
 export default function AttributeQuery({ msal, settings }: Props) {
   const [attribute, setAttribute] = useState<string>(ATTRIBUTE_NAMES[0]);
-  const [mode, setMode] = useState<Mode>("containsItem");
+  const [mode, setMode] = useState<Mode>("containsText");
   const [value, setValue] = useState("");
   const [results, setResults] = useState<GraphUser[]>([]);
   const [selected, setSelected] = useState<GraphUser | null>(null);
@@ -41,6 +41,8 @@ export default function AttributeQuery({ msal, settings }: Props) {
           return true;
         case "equals":
           return raw.trim().toLowerCase() === needle;
+        case "containsText":
+          return raw.toLowerCase().includes(needle);
         case "containsItem":
           return parseItems(raw, settings.delimiter).some(
             (item) => item.toLowerCase() === needle,
@@ -64,10 +66,11 @@ export default function AttributeQuery({ msal, settings }: Props) {
       } else if (mode === "equals") {
         users = await queryByAttribute(msal, attribute, value);
       } else {
-        // Graph can only filter exact matches on this property, so for item
-        // membership we fetch everyone with a value and filter client-side.
+        // Graph can only filter exact matches on this property, so for
+        // substring/item matching we fetch everyone with a value and filter
+        // client-side.
         users = await listUsersWithAttribute(msal, attribute, 999);
-        if (mode === "containsItem") {
+        if (mode === "containsItem" || mode === "containsText") {
           users = users.filter((u) => matchedAttributes(u, [attribute]).length > 0);
         }
       }
@@ -103,7 +106,8 @@ export default function AttributeQuery({ msal, settings }: Props) {
             ))}
           </select>
           <select value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
-            <option value="containsItem">contains item</option>
+            <option value="containsText">contains text (partial match)</option>
+            <option value="containsItem">has item (exact item match)</option>
             <option value="equals">equals exact value</option>
             <option value="hasAnyValue">has any value</option>
           </select>
@@ -111,7 +115,13 @@ export default function AttributeQuery({ msal, settings }: Props) {
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={mode === "equals" ? "Full stored value" : "Item to look for"}
+              placeholder={
+                mode === "equals"
+                  ? "Full stored value"
+                  : mode === "containsItem"
+                    ? "Exact item, e.g. Altar Ministry"
+                    : "Text to search for, e.g. Altar"
+              }
               spellCheck={false}
             />
           )}
