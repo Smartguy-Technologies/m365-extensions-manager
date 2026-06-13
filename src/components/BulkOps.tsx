@@ -307,6 +307,7 @@ export default function BulkOps({ msal, settings }: Props) {
       {plan && (
         <>
           <h3>Preview ({applicable} change(s), {plan.length - applicable} skipped)</h3>
+          <div className="table-scroll">
           <table className="user-table">
             <thead>
               <tr>
@@ -329,6 +330,7 @@ export default function BulkOps({ msal, settings }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
 
@@ -339,6 +341,7 @@ export default function BulkOps({ msal, settings }: Props) {
             {results.filter((r) => !r.ok).length} failed
           </h3>
           {results.some((r) => !r.ok) && (
+            <div className="table-scroll">
             <table className="user-table">
               <thead>
                 <tr>
@@ -359,6 +362,7 @@ export default function BulkOps({ msal, settings }: Props) {
                   ))}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}

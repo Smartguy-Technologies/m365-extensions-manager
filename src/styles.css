@@ -71,6 +71,13 @@ h3 {
   gap: 0.25rem;
   border-bottom: 2px solid var(--border);
   margin-bottom: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tabs button {
@@ -82,6 +89,8 @@ h3 {
   cursor: pointer;
   color: var(--muted);
   margin-bottom: -2px;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .tabs button.active {
@@ -255,6 +264,7 @@ textarea {
   font-size: 0.85rem;
   margin: 0.6rem 0;
   border: 1px solid;
+  overflow-wrap: anywhere;
 }
 
 .banner.error {
@@ -306,6 +316,11 @@ textarea {
 .tag.info {
   background: #e8f1fb;
   color: var(--accent);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .user-table {
@@ -507,5 +522,68 @@ textarea {
 @media (max-width: 800px) {
   .bulk-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Phones / narrow viewports */
+@media (max-width: 640px) {
+  .app {
+    padding: 0 0.75rem 2.5rem;
+  }
+
+  h1 {
+    font-size: 1.05rem;
+  }
+
+  /* 16px keeps iOS Safari from auto-zooming when a field is focused */
+  input,
+  select,
+  textarea,
+  select.mini,
+  .add-item input {
+    font-size: 16px;
+  }
+
+  /* Title and the sign-in / account controls stack when space is tight */
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .account-chip {
+    max-width: 60vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Each query control gets its own row so it's easy to tap */
+  .query-form > * {
+    flex: 1 1 100%;
+  }
+
+  /* Editor actions wrap under the user name instead of overflowing */
+  .editor-head {
+    flex-wrap: wrap;
+  }
+
+  /* Wide tables scroll sideways inside their panel rather than squishing */
+  .user-table {
+    min-width: 34rem;
+  }
+
+  /* Roomier tap targets */
+  .tabs button {
+    padding: 0.6rem 0.75rem;
+  }
+
+  button.mini {
+    padding: 0.32rem 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  .chip-btn {
+    padding: 0.1rem 0.35rem;
+    font-size: 0.95rem;
   }
 }
