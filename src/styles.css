@@ -228,6 +228,26 @@ textarea {
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
+/* Masked ID input with a Show/Hide toggle */
+.secret-field {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.secret-field input {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.secret-toggle {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.7rem;
+}
+
 .row {
   display: flex;
   align-items: center;
