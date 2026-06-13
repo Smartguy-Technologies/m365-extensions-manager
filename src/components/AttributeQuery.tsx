@@ -142,6 +142,7 @@ export default function AttributeQuery({ msal, settings }: Props) {
           </div>
         )}
         {results.length > 0 && (
+          <div className="table-scroll">
           <table className="user-table">
             <thead>
               <tr>
@@ -180,6 +181,7 @@ export default function AttributeQuery({ msal, settings }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
       <div className="panel">

@@ -125,6 +125,7 @@ export default function AllUsersTab({ msal, settings }: Props) {
             <div className="hint">
               Showing {filtered.length} of {users.length} loaded user(s).
             </div>
+            <div className="table-scroll">
             <table className="user-table">
               <thead>
                 <tr>
@@ -174,6 +175,7 @@ export default function AllUsersTab({ msal, settings }: Props) {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
         )}
         {!users && !loading && (
