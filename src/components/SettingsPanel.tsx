@@ -11,6 +11,8 @@ export default function SettingsPanel({ settings, onSave }: Props) {
   const [clientId, setClientId] = useState(settings.clientId);
   const [delimiter, setDelimiter] = useState(settings.delimiter);
   const [saved, setSaved] = useState(false);
+  const [showTenant, setShowTenant] = useState(false);
+  const [showClient, setShowClient] = useState(false);
 
   return (
     <div className="panel narrow">
@@ -21,28 +23,53 @@ export default function SettingsPanel({ settings, onSave }: Props) {
         <code>User.ReadWrite.All</code> (admin consent required), then paste its IDs here.
         Settings are stored only in this browser. Defaults can also be supplied via a{" "}
         <code>.env.local</code> file (<code>M365_TENANT_ID</code>, <code>EAM_APP_CLIENT_ID</code>,{" "}
-        <code>VITE_DELIMITER</code>) — values saved here override them.
+        <code>VITE_DELIMITER</code>) — values saved here override them. The IDs are hidden by
+        default; use <strong>Show</strong> to reveal them.
       </p>
       <label>
         Tenant ID
-        <input
-          value={tenantId}
-          onChange={(e) => setTenantId(e.target.value)}
-          placeholder="00000000-0000-0000-0000-000000000000"
-          spellCheck={false}
-        />
+        <div className="secret-field">
+          <input
+            type={showTenant ? "text" : "password"}
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            className="secret-toggle"
+            onClick={() => setShowTenant((v) => !v)}
+            aria-pressed={showTenant}
+          >
+            {showTenant ? "Hide" : "Show"}
+          </button>
+        </div>
         {ENV_DEFAULTS.tenantId && tenantId === ENV_DEFAULTS.tenantId && (
           <span className="hint">Using default from M365_TENANT_ID</span>
         )}
       </label>
       <label>
         Application (client) ID
-        <input
-          value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          placeholder="00000000-0000-0000-0000-000000000000"
-          spellCheck={false}
-        />
+        <div className="secret-field">
+          <input
+            type={showClient ? "text" : "password"}
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            className="secret-toggle"
+            onClick={() => setShowClient((v) => !v)}
+            aria-pressed={showClient}
+          >
+            {showClient ? "Hide" : "Show"}
+          </button>
+        </div>
         {ENV_DEFAULTS.clientId && clientId === ENV_DEFAULTS.clientId && (
           <span className="hint">Using default from EAM_APP_CLIENT_ID</span>
         )}
