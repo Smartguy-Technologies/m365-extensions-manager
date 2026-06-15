@@ -10,6 +10,8 @@ export default function SettingsPanel({ settings, onSave }: Props) {
   const [tenantId, setTenantId] = useState(settings.tenantId);
   const [clientId, setClientId] = useState(settings.clientId);
   const [delimiter, setDelimiter] = useState(settings.delimiter);
+  const [showTenant, setShowTenant] = useState(false);
+  const [showClient, setShowClient] = useState(false);
   const [saved, setSaved] = useState(false);
 
   return (
@@ -25,24 +27,50 @@ export default function SettingsPanel({ settings, onSave }: Props) {
       </p>
       <label>
         Tenant ID
-        <input
-          value={tenantId}
-          onChange={(e) => setTenantId(e.target.value)}
-          placeholder="00000000-0000-0000-0000-000000000000"
-          spellCheck={false}
-        />
+        <div className="secret-input">
+          <input
+            type={showTenant ? "text" : "password"}
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            className="reveal"
+            onClick={() => setShowTenant((v) => !v)}
+            aria-pressed={showTenant}
+            aria-label={showTenant ? "Hide tenant ID" : "Show tenant ID"}
+          >
+            {showTenant ? "Hide" : "Show"}
+          </button>
+        </div>
         {ENV_DEFAULTS.tenantId && tenantId === ENV_DEFAULTS.tenantId && (
           <span className="hint">Using default from M365_TENANT_ID</span>
         )}
       </label>
       <label>
         Application (client) ID
-        <input
-          value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          placeholder="00000000-0000-0000-0000-000000000000"
-          spellCheck={false}
-        />
+        <div className="secret-input">
+          <input
+            type={showClient ? "text" : "password"}
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            className="reveal"
+            onClick={() => setShowClient((v) => !v)}
+            aria-pressed={showClient}
+            aria-label={showClient ? "Hide client ID" : "Show client ID"}
+          >
+            {showClient ? "Hide" : "Show"}
+          </button>
+        </div>
         {ENV_DEFAULTS.clientId && clientId === ENV_DEFAULTS.clientId && (
           <span className="hint">Using default from EAM_APP_CLIENT_ID</span>
         )}
