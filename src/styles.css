@@ -561,6 +561,40 @@ textarea {
   min-width: 160px;
 }
 
+/* Expression builder */
+.cond-joiner {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin: 0.15rem 0 0.45rem;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
+.filter-code {
+  background: #f1f4f7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  margin: 0.3rem 0 0;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+.filter-code.empty {
+  color: var(--muted);
+}
+
 .user-search {
   position: relative;
 }
