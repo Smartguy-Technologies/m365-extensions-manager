@@ -136,6 +136,25 @@ export async function listUsersWithAttribute(
 }
 
 /**
+ * Run an arbitrary OData $filter against /users and return the matches.
+ * Used by the Expression Builder to evaluate compound filters. Filtering on
+ * onPremisesExtensionAttributes requires advanced query support
+ * (ConsistencyLevel: eventual + $count=true).
+ */
+export async function queryUsersByFilter(
+  app: PublicClientApplication,
+  filter: string,
+  top = 100,
+): Promise<GraphUser[]> {
+  const path = `/users?$select=${USER_SELECT}&$filter=${encodeURIComponent(
+    filter,
+  )}&$top=${top}&$count=true`;
+  const res = await graphFetch(app, path, {}, { ConsistencyLevel: "eventual" });
+  const body = await res.json();
+  return (body.value as GraphUser[]).map(normalizeUser);
+}
+
+/**
  * Page through every user in the tenant, following @odata.nextLink.
  * Reports progress as pages arrive so the UI can show a running count.
  */
