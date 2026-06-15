@@ -3,6 +3,8 @@ export interface AppSettings {
   clientId: string;
   /** Delimiter used to store multiple items inside a single extension attribute value. */
   delimiter: string;
+  /** If false, each extensionAttribute may hold at most one value. */
+  allowMultiValueAttributes: boolean;
 }
 
 const STORAGE_KEY = "eam.settings";
@@ -16,6 +18,7 @@ export const ENV_DEFAULTS = {
   tenantId: (import.meta.env.M365_TENANT_ID ?? "").trim(),
   clientId: (import.meta.env.EAM_APP_CLIENT_ID ?? "").trim(),
   delimiter: import.meta.env.VITE_DELIMITER || ";",
+  allowMultiValueAttributes: true,
 };
 
 export const DEFAULT_SETTINGS: AppSettings = { ...ENV_DEFAULTS };
@@ -33,6 +36,8 @@ export function loadSettings(): AppSettings {
     tenantId: stored.tenantId?.trim() || ENV_DEFAULTS.tenantId,
     clientId: stored.clientId?.trim() || ENV_DEFAULTS.clientId,
     delimiter: stored.delimiter || ENV_DEFAULTS.delimiter,
+    allowMultiValueAttributes:
+      stored.allowMultiValueAttributes ?? ENV_DEFAULTS.allowMultiValueAttributes,
   };
 }
 

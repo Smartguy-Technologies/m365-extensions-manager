@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PublicClientApplication } from "@azure/msal-browser";
 import type { AppSettings } from "../config";
 import {
   getUser,
+  searchUsers,
   batchUpdateExtensionAttributes,
   type BatchResult,
   type GraphUser,
@@ -36,6 +37,18 @@ interface PlannedChange {
   skip: boolean;
 }
 
+/** Split the "users" textarea into a de-duplicated list of UPN/object-ID identifiers. */
+function parseUpnList(text: string): string[] {
+  return Array.from(
+    new Set(
+      text
+        .split(/\r?\n|,/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 export default function BulkOps({ msal, settings }: Props) {
   const [upnText, setUpnText] = useState("");
   const [attribute, setAttribute] = useState<string>(AUTO);
@@ -47,8 +60,76 @@ export default function BulkOps({ msal, settings }: Props) {
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<GraphUser[]>([]);
+  const [searching, setSearching] = useState(false);
 
   const { delimiter } = settings;
+
+  const addedUpns = useMemo(() => parseUpnList(upnText), [upnText]);
+
+  // Hide users that are already in the list below.
+  const visibleSearchResults = useMemo(
+    () =>
+      searchResults.filter(
+        (u) =>
+          !addedUpns.some(
+            (v) =>
+              v.toLowerCase() === u.userPrincipalName.toLowerCase() ||
+              v.toLowerCase() === u.id.toLowerCase(),
+          ),
+      ),
+    [searchResults, addedUpns],
+  );
+
+  // Search-as-you-type lookup so users can be added without typos.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchUsers(msal, q, 10)
+        .then((users) => {
+          if (!cancelled) setSearchResults(users);
+        })
+        .catch(() => {
+          if (!cancelled) setSearchResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setSearching(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, msal]);
+
+  function addUserFromSearch(u: GraphUser) {
+    const already = addedUpns.some(
+      (v) =>
+        v.toLowerCase() === u.userPrincipalName.toLowerCase() || v.toLowerCase() === u.id.toLowerCase(),
+    );
+    if (!already) {
+      setUpnText((prev) => (prev.trim() ? `${prev.replace(/\s+$/, "")}\n${u.userPrincipalName}` : u.userPrincipalName));
+    }
+    setSearchQuery("");
+    setSearchResults([]);
+  }
+
+  function removeUpn(value: string) {
+    setUpnText((prev) =>
+      prev
+        .split(/\r?\n/)
+        .filter((line) => line.trim() !== value)
+        .join("\n"),
+    );
+  }
 
   /** Add into the user's first empty attribute, deduping against ALL 15 attributes. */
   function planAutoAdd(user: GraphUser, values: string[]): PlannedChange {
@@ -153,14 +234,7 @@ export default function BulkOps({ msal, settings }: Props) {
     setResults(null);
     setPlan(null);
     try {
-      const upns = Array.from(
-        new Set(
-          upnText
-            .split(/\r?\n|,/)
-            .map((s) => s.trim())
-            .filter(Boolean),
-        ),
-      );
+      const upns = parseUpnList(upnText);
       if (upns.length === 0) throw new Error("Enter at least one user (UPN or object ID).");
       if ((operation === "add" || operation === "remove" || operation === "overwrite") &&
           parseInputValues(valuesText, delimiter).length === 0) {
@@ -221,16 +295,61 @@ export default function BulkOps({ msal, settings }: Props) {
     <div className="panel">
       <h2>Bulk operations</h2>
       <div className="bulk-grid">
-        <label>
-          Users (UPN or object ID, one per line — paste a CSV column)
-          <textarea
-            rows={8}
-            value={upnText}
-            onChange={(e) => setUpnText(e.target.value)}
-            placeholder={"alice@contoso.com\nbob@contoso.com"}
-            spellCheck={false}
-          />
-        </label>
+        <div>
+          <label className="user-search">
+            Add a user (search by name or email)
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onBlur={() => setTimeout(() => setSearchResults([]), 150)}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === "Tab") && visibleSearchResults.length > 0) {
+                  e.preventDefault();
+                  addUserFromSearch(visibleSearchResults[0]);
+                }
+              }}
+              placeholder="Start typing to search…"
+              spellCheck={false}
+            />
+            {searching && <span className="hint">Searching…</span>}
+            {visibleSearchResults.length > 0 && (
+              <ul className="search-results">
+                {visibleSearchResults.map((u) => (
+                  <li key={u.id} onMouseDown={() => addUserFromSearch(u)}>
+                    <span>{u.displayName}</span>
+                    <span className="mono hint">{u.userPrincipalName}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </label>
+          {addedUpns.length > 0 && (
+            <div className="chips">
+              {addedUpns.map((upn) => (
+                <span key={upn} className="chip mono">
+                  {upn}
+                  <button
+                    className="chip-btn remove"
+                    onClick={() => removeUpn(upn)}
+                    title={`Remove ${upn}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <label>
+            Or paste users (UPN or object ID, one per line — paste a CSV column)
+            <textarea
+              rows={6}
+              value={upnText}
+              onChange={(e) => setUpnText(e.target.value)}
+              placeholder={"alice@contoso.com\nbob@contoso.com"}
+              spellCheck={false}
+            />
+          </label>
+        </div>
         <div>
           <label>
             Operation

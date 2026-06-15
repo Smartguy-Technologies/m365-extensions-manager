@@ -12,8 +12,9 @@ import UsersTab from "./components/UsersTab";
 import AttributeQuery from "./components/AttributeQuery";
 import AllUsersTab from "./components/AllUsersTab";
 import BulkOps from "./components/BulkOps";
+import ExpressionBuilder from "./components/ExpressionBuilder";
 
-type Tab = "users" | "query" | "all" | "bulk" | "settings";
+type Tab = "users" | "query" | "all" | "bulk" | "expression" | "settings";
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -118,6 +119,12 @@ export default function App() {
           Bulk operations
         </button>
         <button
+          className={tab === "expression" ? "active" : ""}
+          onClick={() => setTab("expression")}
+        >
+          Expression builder
+        </button>
+        <button
           className={tab === "settings" ? "active" : ""}
           onClick={() => setTab("settings")}
         >
@@ -148,6 +155,9 @@ export default function App() {
         {signedIn && tab === "query" && <AttributeQuery msal={msal} settings={settings} />}
         {signedIn && tab === "all" && <AllUsersTab msal={msal} settings={settings} />}
         {signedIn && tab === "bulk" && <BulkOps msal={msal} settings={settings} />}
+        {signedIn && tab === "expression" && (
+          <ExpressionBuilder msal={msal} settings={settings} />
+        )}
       </main>
     </div>
   );

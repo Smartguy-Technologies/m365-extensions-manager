@@ -22,6 +22,7 @@
 body {
   margin: 0;
   background: var(--bg);
+  overflow-x: hidden;
 }
 
 .app {
@@ -228,6 +229,15 @@ textarea {
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
+/* Selects/textareas placed directly in a narrow panel (outside a <label>)
+   still need to fill the available width. */
+.panel.narrow > select,
+.panel.narrow > textarea,
+.panel.narrow .row > select {
+  width: 100%;
+  margin-top: 0.3rem;
+}
+
 /* Masked ID input with a Show/Hide toggle */
 .secret-field {
   display: flex;
@@ -338,6 +348,11 @@ textarea {
   color: var(--accent);
 }
 
+.tag.muted {
+  background: #e3e6e9;
+  color: var(--muted);
+}
+
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -406,6 +421,16 @@ textarea {
   padding: 0.55rem 0.7rem;
 }
 
+.attr-row.available {
+  background: #eaf7ee;
+  border-color: #bfe3c8;
+}
+
+.attr-row.used {
+  background: #f1f2f4;
+  border-color: var(--border);
+}
+
 .attr-row.changed {
   border-color: var(--accent);
   background: #f7fafd;
@@ -422,6 +447,7 @@ textarea {
 .attr-name {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.45rem;
   margin: 0;
   font-weight: 400;
@@ -454,11 +480,13 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
+  max-width: 100%;
   background: #eef3f8;
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0.12rem 0.5rem;
   font-size: 0.82rem;
+  overflow-wrap: anywhere;
 }
 
 .chip-btn {
@@ -533,6 +561,47 @@ textarea {
   min-width: 160px;
 }
 
+.user-search {
+  position: relative;
+}
+
+.search-results {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-results li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.search-results li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.search-results li:hover {
+  background: #f0f6fc;
+}
+
 .bulk-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -592,9 +661,22 @@ textarea {
     min-width: 34rem;
   }
 
+  /* With 6 tabs, a horizontally-scrolling bar with no visible scrollbar
+     just looks like the last tabs are missing — wrap them onto extra
+     rows instead so every tab stays visible and reachable. */
+  .tabs {
+    overflow-x: visible;
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+  }
+
   /* Roomier tap targets */
   .tabs button {
-    padding: 0.6rem 0.75rem;
+    flex: 1 1 auto;
+    text-align: center;
+    white-space: normal;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.85rem;
   }
 
   button.mini {
@@ -605,5 +687,16 @@ textarea {
   .chip-btn {
     padding: 0.1rem 0.35rem;
     font-size: 0.95rem;
+  }
+
+  /* Long checkbox labels (e.g. Settings) wrap instead of overflowing */
+  .inline-check {
+    white-space: normal;
+    align-items: flex-start;
+  }
+
+  /* Button rows above the attribute list stack neatly on phones */
+  .restock-bar input {
+    flex: 1 1 100%;
   }
 }

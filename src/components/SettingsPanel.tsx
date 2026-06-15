@@ -10,6 +10,9 @@ export default function SettingsPanel({ settings, onSave }: Props) {
   const [tenantId, setTenantId] = useState(settings.tenantId);
   const [clientId, setClientId] = useState(settings.clientId);
   const [delimiter, setDelimiter] = useState(settings.delimiter);
+  const [allowMultiValueAttributes, setAllowMultiValueAttributes] = useState(
+    settings.allowMultiValueAttributes,
+  );
   const [saved, setSaved] = useState(false);
   const [showTenant, setShowTenant] = useState(false);
   const [showClient, setShowClient] = useState(false);
@@ -86,12 +89,30 @@ export default function SettingsPanel({ settings, onSave }: Props) {
           Used to store multiple items inside one attribute value (default <code>;</code>).
         </span>
       </label>
+      <label className="inline-check">
+        <input
+          type="checkbox"
+          checked={allowMultiValueAttributes}
+          onChange={(e) => setAllowMultiValueAttributes(e.target.checked)}
+        />
+        Allow multiple values per extensionAttribute
+      </label>
+      <p className="hint">
+        When off, each extensionAttribute may hold only a single value: the "Add item" control
+        is disabled for attributes that already have a value, and the Expression builder limits
+        you to one selected value at a time.
+      </p>
       <div className="row">
         <button
           className="primary"
           disabled={!tenantId.trim() || !clientId.trim() || !delimiter}
           onClick={() => {
-            onSave({ tenantId: tenantId.trim(), clientId: clientId.trim(), delimiter });
+            onSave({
+              tenantId: tenantId.trim(),
+              clientId: clientId.trim(),
+              delimiter,
+              allowMultiValueAttributes,
+            });
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
           }}

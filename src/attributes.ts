@@ -96,6 +96,22 @@ export function moveItem<T>(items: T[], from: number, to: number): T[] {
   return out;
 }
 
+/** Spread a flat list of items round-robin across the given attributes. */
+function redistribute(
+  attrs: ExtensionAttributes,
+  attributeNames: string[],
+  delimiter: string,
+  items: string[],
+): ExtensionAttributes {
+  const buckets: string[][] = attributeNames.map(() => []);
+  items.forEach((item, i) => buckets[i % attributeNames.length].push(item));
+  const result: ExtensionAttributes = { ...attrs };
+  attributeNames.forEach((name, i) => {
+    result[name] = serializeItems(buckets[i], delimiter);
+  });
+  return result;
+}
+
 /**
  * "Restock": gather every item from the given attributes and redistribute them
  * evenly (round-robin) across those same attributes, de-duplicated.
@@ -108,13 +124,23 @@ export function redistributeItems(
   const all = dedupeItems(
     attributeNames.flatMap((name) => parseItems(attrs[name], delimiter)),
   );
-  const buckets: string[][] = attributeNames.map(() => []);
-  all.forEach((item, i) => buckets[i % attributeNames.length].push(item));
-  const result: ExtensionAttributes = { ...attrs };
-  attributeNames.forEach((name, i) => {
-    result[name] = serializeItems(buckets[i], delimiter);
-  });
-  return result;
+  return redistribute(attrs, attributeNames, delimiter, all);
+}
+
+/**
+ * Gather every item from the given attributes, sort them alphabetically
+ * (case-insensitive), and redistribute them evenly (round-robin) across those
+ * same attributes. Does not de-duplicate.
+ */
+export function sortItemsGlobally(
+  attrs: ExtensionAttributes,
+  attributeNames: string[],
+  delimiter: string,
+): ExtensionAttributes {
+  const all = attributeNames
+    .flatMap((name) => parseItems(attrs[name], delimiter))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return redistribute(attrs, attributeNames, delimiter, all);
 }
 
 /** Parse a textarea of values: one per line, also splitting on the delimiter and commas. */

@@ -59,7 +59,7 @@ function normalizeUser(u: GraphUser): GraphUser {
   return { ...u, onPremisesExtensionAttributes: u.onPremisesExtensionAttributes ?? {} };
 }
 
-/** Search users by display name, UPN or mail prefix. */
+/** Search users by first name, last name, display name, nickname, UPN or mail prefix. */
 export async function searchUsers(
   app: PublicClientApplication,
   query: string,
@@ -71,7 +71,14 @@ export async function searchUsers(
     path = `/users?$select=${USER_SELECT}&$top=${top}&$orderby=displayName&$count=true`;
   } else {
     const filter = encodeURIComponent(
-      `startswith(displayName,'${q}') or startswith(userPrincipalName,'${q}') or startswith(mail,'${q}')`,
+      [
+        `startswith(displayName,'${q}')`,
+        `startswith(givenName,'${q}')`,
+        `startswith(surname,'${q}')`,
+        `startswith(mailNickname,'${q}')`,
+        `startswith(userPrincipalName,'${q}')`,
+        `startswith(mail,'${q}')`,
+      ].join(" or "),
     );
     path = `/users?$select=${USER_SELECT}&$filter=${filter}&$top=${top}&$count=true`;
   }

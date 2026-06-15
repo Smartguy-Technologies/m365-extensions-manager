@@ -11,6 +11,7 @@ import {
   redistributeItems,
   serializeItems,
   shuffleItems,
+  sortItemsGlobally,
   type ExtensionAttributes,
 } from "../attributes";
 
@@ -25,6 +26,7 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
   const original = user.onPremisesExtensionAttributes;
   const [attrs, setAttrs] = useState<ExtensionAttributes>(() => ({ ...original }));
   const [newItem, setNewItem] = useState<Record<string, string>>({});
+  const [quickAddValue, setQuickAddValue] = useState("");
   const [restockChecked, setRestockChecked] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,21 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
     );
   }
 
+  /** Assign a value to the user's next empty extensionAttribute (1→15). */
+  function handleQuickAdd() {
+    const value = quickAddValue.trim();
+    if (!value) return;
+    const target = ATTRIBUTE_NAMES.find((n) => itemsOf(n).length === 0);
+    if (!target) {
+      setError("All 15 extension attributes already have a value — none available to add to.");
+      return;
+    }
+    setItems(target, [value]);
+    setNotice(`Added "${value}" to ${target}.`);
+    setError(null);
+    setQuickAddValue("");
+  }
+
   function handleRestock() {
     const names = ATTRIBUTE_NAMES.filter((n) => restockChecked.has(n));
     if (names.length < 2) {
@@ -85,6 +102,16 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
     }
     setAttrs((prev) => redistributeItems(prev, names, delimiter));
     setNotice(`Redistributed items evenly across ${names.length} attributes.`);
+  }
+
+  function handleSortAll() {
+    setAttrs((prev) => sortItemsGlobally(prev, ATTRIBUTE_NAMES, delimiter));
+    setNotice("Sorted all items A–Z across extensionAttribute1–15.");
+  }
+
+  function handleDedupeAll() {
+    setAttrs((prev) => redistributeItems(prev, ATTRIBUTE_NAMES, delimiter));
+    setNotice("Removed duplicate items across extensionAttribute1–15.");
   }
 
   async function handleSave() {
@@ -139,6 +166,39 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
       {notice && !error && <div className="banner info">{notice}</div>}
 
       <div className="row restock-bar">
+        <button onClick={handleSortAll} disabled={synced}>
+          A–Z (all)
+        </button>
+        <button onClick={handleDedupeAll} disabled={synced}>
+          De-dupe (all)
+        </button>
+        <span className="hint">
+          Gathers items from all 15 attributes, sorts or de-duplicates them, and redistributes
+          them evenly.
+        </span>
+      </div>
+
+      <form
+        className="row restock-bar"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleQuickAdd();
+        }}
+      >
+        <input
+          value={quickAddValue}
+          onChange={(e) => setQuickAddValue(e.target.value)}
+          placeholder="New value…"
+          spellCheck={false}
+          disabled={synced}
+        />
+        <button className="primary" type="submit" disabled={!quickAddValue.trim() || synced}>
+          + Add attribute
+        </button>
+        <span className="hint">Assigns the value to the next empty extensionAttribute1–15.</span>
+      </form>
+
+      <div className="row restock-bar">
         <button onClick={handleRestock} disabled={synced}>
           ♻ Restock checked attributes
         </button>
@@ -152,8 +212,12 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
         {ATTRIBUTE_NAMES.map((name, i) => {
           const items = itemsOf(name);
           const changed = changedNames.includes(name);
+          const used = items.length > 0;
           return (
-            <div key={name} className={`attr-row ${changed ? "changed" : ""}`}>
+            <div
+              key={name}
+              className={`attr-row ${used ? "used" : "available"} ${changed ? "changed" : ""}`}
+            >
               <div className="attr-row-head">
                 <label className="attr-name">
                   <input
@@ -171,6 +235,9 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
                   />
                   <strong>{i + 1}</strong> {name}
                   {changed && <span className="tag info">modified</span>}
+                  <span className={`tag ${used ? "muted" : "ok"}`}>
+                    {used ? "in use" : "available"}
+                  </span>
                 </label>
                 <div className="attr-actions">
                   <button
@@ -262,23 +329,29 @@ export default function UserEditor({ msal, settings, user, onUserUpdated }: Prop
                   </span>
                 ))}
               </div>
-              <form
-                className="row add-item"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAdd(name);
-                }}
-              >
-                <input
-                  value={newItem[name] ?? ""}
-                  onChange={(e) => setNewItem((prev) => ({ ...prev, [name]: e.target.value }))}
-                  placeholder="Add item…"
-                  spellCheck={false}
-                />
-                <button className="mini" type="submit" disabled={!(newItem[name] ?? "").trim()}>
-                  Add
-                </button>
-              </form>
+              {settings.allowMultiValueAttributes || items.length === 0 ? (
+                <form
+                  className="row add-item"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAdd(name);
+                  }}
+                >
+                  <input
+                    value={newItem[name] ?? ""}
+                    onChange={(e) => setNewItem((prev) => ({ ...prev, [name]: e.target.value }))}
+                    placeholder="Add item…"
+                    spellCheck={false}
+                  />
+                  <button className="mini" type="submit" disabled={!(newItem[name] ?? "").trim()}>
+                    Add
+                  </button>
+                </form>
+              ) : (
+                <div className="hint add-item">
+                  Multiple values per attribute are disabled — clear this attribute first.
+                </div>
+              )}
             </div>
           );
         })}
